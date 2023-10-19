@@ -3504,7 +3504,7 @@ UniValue createwithdrawal(const JSONRPCRequest& request)
 
     if (request.fHelp || request.params.size() != 5)
         throw std::runtime_error(
-            "createwt amount \"address\"\n"
+            "createwithdrawal amount \"address\"\n"
             "\nCreate a withdrawal so that it can be included in a bundle.\n"
             + HelpRequiringPassphrase(pwallet) +
             "\nArguments:\n"
@@ -3516,8 +3516,8 @@ UniValue createwithdrawal(const JSONRPCRequest& request)
             "\nResult:\n"
             "\"txid\"                  (string) The transaction id.\n"
             "\nExamples:\n"
-            + HelpExampleCli("createwt", "\"1M72Sfpbz1BPpXFHz9m3CdqATR44Jvaydd\", \"1M72Sfpbz1BPpXFHz9m3CdqATR44Jvaydd\", 0.3, 0.1, 0.1")
-            + HelpExampleRpc("createwt", "\"1M72Sfpbz1BPpXFHz9m3CdqATR44Jvaydd\", \"1M72Sfpbz1BPpXFHz9m3CdqATR44Jvaydd\", 0.3, 0.1, 0.1")
+            + HelpExampleCli("createwithdrawal", "\"1M72Sfpbz1BPpXFHz9m3CdqATR44Jvaydd\", \"1M72Sfpbz1BPpXFHz9m3CdqATR44Jvaydd\", 0.3, 0.1, 0.1")
+            + HelpExampleRpc("createwithdrawal", "\"1M72Sfpbz1BPpXFHz9m3CdqATR44Jvaydd\", \"1M72Sfpbz1BPpXFHz9m3CdqATR44Jvaydd\", 0.3, 0.1, 0.1")
         );
 
     ObserveSafeMode();
