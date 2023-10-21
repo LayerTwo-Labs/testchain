@@ -85,6 +85,9 @@ enum RPCErrorCode
     RPC_WALLET_ALREADY_UNLOCKED     = -17, //!< Wallet is already unlocked
     RPC_WALLET_NOT_FOUND            = -18, //!< Invalid wallet specified
     RPC_WALLET_NOT_SPECIFIED        = -19, //!< No wallet specified (error when there are multiple wallets loaded)
+                                           
+    //! Sidechain errors 
+    RPC_NO_LATEST_WITHDRAWAL_BUNDLE_HASH = -100 //!< No withdrawal bundle has ever been created
 };
 
 UniValue JSONRPCRequestObj(const std::string& strMethod, const UniValue& params, const UniValue& id);
