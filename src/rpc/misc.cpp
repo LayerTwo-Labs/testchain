@@ -735,10 +735,9 @@ UniValue getwithdrawalbundle(const JSONRPCRequest& request)
 
     SidechainWithdrawalBundle withdrawalBundle;
     uint256 hashLatest;
-    psidechaintree->GetLastWithdrawalBundleHash(hashLatest);
-
-    if (hashLatest.IsNull())
-        throw JSONRPCError(RPC_MISC_ERROR, "Failed to lookup latest WithdrawalBundle hash!");
+    if (!psidechaintree->GetLastWithdrawalBundleHash(hashLatest) || hashLatest.IsNull()) {
+        throw JSONRPCError(RPC_NO_LATEST_WITHDRAWAL_BUNDLE_HASH, "No withdrawal bundle has been created"); 
+    }
 
     if (!psidechaintree->GetWithdrawalBundle(hashLatest, withdrawalBundle))
         throw JSONRPCError(RPC_MISC_ERROR, "Failed to load latest WithdrawalBundle from database");
