@@ -87,7 +87,8 @@ enum RPCErrorCode
     RPC_WALLET_NOT_SPECIFIED        = -19, //!< No wallet specified (error when there are multiple wallets loaded)
                                            
     //! Sidechain errors 
-    RPC_NO_LATEST_WITHDRAWAL_BUNDLE_HASH = -100 //!< No withdrawal bundle has ever been created
+    RPC_NO_LATEST_WITHDRAWAL_BUNDLE_HASH = -100, //!< No withdrawal bundle has ever been created
+    RPC_WITHDRAWAL_NOT_FOUND             = -101, //!< The requested withdrawal does not exist
 };
 
 UniValue JSONRPCRequestObj(const std::string& strMethod, const UniValue& params, const UniValue& id);

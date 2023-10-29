@@ -761,7 +761,7 @@ UniValue getwithdrawal(const JSONRPCRequest& request)
 
     SidechainWithdrawal wt;
     if (!psidechaintree->GetWithdrawal(id, wt))
-        throw JSONRPCError(RPC_MISC_ERROR, "Withdrawal does not exist!");
+        throw JSONRPCError(RPC_WITHDRAWAL_NOT_FOUND, "Withdrawal does not exist!");
 
     UniValue result(UniValue::VOBJ);
     result.pushKV("destination", wt.strDestination);
