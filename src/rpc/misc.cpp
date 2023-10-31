@@ -9,11 +9,13 @@
 #include <clientversion.h>
 #include <core_io.h>
 #include <crypto/ripemd160.h>
+#include <consensus/validation.h>
 #include <init.h>
 #include <validation.h>
 #include <httpserver.h>
 #include <net.h>
 #include <netbase.h>
+#include <policy/withdrawalbundle.h>
 #include <rpc/blockchain.h>
 #include <rpc/server.h>
 #include <rpc/util.h>
@@ -736,7 +738,7 @@ UniValue getwithdrawalbundle(const JSONRPCRequest& request)
     SidechainWithdrawalBundle withdrawalBundle;
     uint256 hashLatest;
     if (!psidechaintree->GetLastWithdrawalBundleHash(hashLatest) || hashLatest.IsNull()) {
-        throw JSONRPCError(RPC_NO_LATEST_WITHDRAWAL_BUNDLE_HASH, "No withdrawal bundle has been created"); 
+        throw JSONRPCError(RPC_NO_LATEST_WITHDRAWAL_BUNDLE_HASH, "No withdrawal bundle has been created");
     }
 
     if (!psidechaintree->GetWithdrawalBundle(hashLatest, withdrawalBundle))
@@ -804,6 +806,93 @@ UniValue formatdepositaddress(const JSONRPCRequest& request)
     return strDepositAddress;
 }
 
+UniValue listunspentwithdrawals(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size())
+        throw std::runtime_error(
+            "listunspentwithdrawals\n"
+            "List unspent (not in a bundle) withdrawals\n"
+            "\nArguments: none\n"
+            "\nResult:\n"
+            "{\n"
+            "  (array json objects)\n"
+            "}\n"
+            "\nExamples:\n"
+            + HelpExampleCli("listunspentwithdrawals", "")
+            + HelpExampleRpc("listunspentwithdrawals", "")
+        );
+
+    std::vector<SidechainWithdrawal> vWT;
+    vWT = psidechaintree->GetWithdrawals(THIS_SIDECHAIN);
+
+    SelectUnspentWithdrawal(vWT);
+
+    UniValue arr(UniValue::VARR);
+    for (const SidechainWithdrawal& wt : vWT) {
+        UniValue obj(UniValue::VOBJ);
+        obj.pushKV("destination", wt.strDestination);
+        obj.pushKV("refunddestination", wt.strRefundDestination);
+        obj.pushKV("amount", wt.amount);
+        obj.pushKV("amountmainchainfee",wt.mainchainFee );
+        obj.pushKV("status", wt.GetStatusStr());
+        obj.pushKV("hashblindtx", wt.hashBlindTx.ToString());
+        arr.push_back(obj);
+    }
+
+    return arr;
+}
+
+UniValue listnextbundlewithdrawals(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size())
+        throw std::runtime_error(
+            "listnextbundlewithdrawals\n"
+            "List withdrawals by fee amount limited to withdrawal bundle size\n"
+            "\nArguments: none\n"
+            "\nResult:\n"
+            "{\n"
+            "  (array json objects)\n"
+            "}\n"
+            "\nExamples:\n"
+            + HelpExampleCli("listnextbundlewithdrawals", "")
+            + HelpExampleRpc("listnextbundlewithdrawals", "")
+        );
+
+    std::vector<SidechainWithdrawal> vWT;
+    vWT = psidechaintree->GetWithdrawals(THIS_SIDECHAIN);
+
+    SelectUnspentWithdrawal(vWT);
+    SortWithdrawalByFee(vWT);
+
+    // Make a dummy withdrawal bundle to try calculating the size limit
+    CMutableTransaction mtx;
+    mtx.vout.push_back(CTxOut(0, CScript() << OP_RETURN << ParseHex(HexStr(SIDECHAIN_WITHDRAWAL_BUNDLE_RETURN_DEST))));
+    mtx.vout.push_back(CTxOut(0, CScript() << OP_RETURN << CScriptNum(1LL << 40)));
+    mtx.nVersion = 2;
+    mtx.vin.resize(1);
+    mtx.vin[0].scriptSig = CScript() << OP_0;
+
+    UniValue arr(UniValue::VARR);
+    for (const SidechainWithdrawal& wt : vWT) {
+        UniValue obj(UniValue::VOBJ);
+        obj.pushKV("destination", wt.strDestination);
+        obj.pushKV("refunddestination", wt.strRefundDestination);
+        obj.pushKV("amount", wt.amount);
+        obj.pushKV("amountmainchainfee",wt.mainchainFee );
+        obj.pushKV("status", wt.GetStatusStr());
+        obj.pushKV("hashblindtx", wt.hashBlindTx.ToString());
+        arr.push_back(obj);
+
+        CTxDestination dest = DecodeDestination(wt.strDestination, true);
+        mtx.vout.push_back(CTxOut(wt.amount, GetScriptForDestination(dest)));
+
+        if (GetTransactionWeight(mtx) >= MAX_WITHDRAWAL_BUNDLE_WEIGHT)
+            break;
+    }
+
+    return arr;
+}
+
 static const CRPCCommand commands[] =
 { //  category              name                        actor (function)           argNames
   //  --------------------- ------------------------    -----------------------    ----------
@@ -832,6 +921,8 @@ static const CRPCCommand commands[] =
     { "sidechain",          "rebroadcastwithdrawalbundle",  &rebroadcastwithdrawalbundle,   {}},
     { "sidechain",          "getwithdrawal",                &getwithdrawal,                 {"id"}},
     { "sidechain",          "formatdepositaddress",         &formatdepositaddress,          {"address"}},
+    { "sidechain",          "listunspentwithdrawals",       &listunspentwithdrawals,        {}},
+    { "sidechain",          "listnextbundlewithdrawals",    &listnextbundlewithdrawals,     {}},
 
 };
 
