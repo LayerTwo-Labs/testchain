@@ -747,6 +747,48 @@ UniValue getwithdrawalbundle(const JSONRPCRequest& request)
     return EncodeHexTx(withdrawalBundle.tx);
 }
 
+UniValue getwithdrawalbundleinfo(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() != 1)
+	throw std::runtime_error(
+	    "getwithdrawalbundleinfo\n"
+            "\nArguments:\n"
+            "1. \"id (string, required) the withdrawal bundle ID\"\n"
+	    "\nGet withdrawal bundle info.\n"
+	);
+
+    uint256 id = uint256S(request.params[0].get_str());
+    if (id.IsNull())
+        throw JSONRPCError(RPC_MISC_ERROR, "Invalid ID!");
+
+    SidechainWithdrawalBundle bundle;
+    if (!psidechaintree->GetWithdrawalBundle(id, bundle)) {
+	throw JSONRPCError(RPC_NO_LATEST_WITHDRAWAL_BUNDLE_HASH, "No withdrawal bundle with ID");
+    }
+
+    // Calculate total output and total mainchain fees
+    CAmount amountTotal = 0;
+    CAmount amountMainchainFees = 0;
+    for (const uint256& id : bundle.vWithdrawalID) {
+        SidechainWithdrawal wt;
+        if (!psidechaintree->GetWithdrawal(id, wt)) 
+            throw JSONRPCError(RPC_MISC_ERROR, "Withdrawal from bundle missing in DB!");
+        amountTotal += wt.amount;
+        amountMainchainFees += wt.mainchainFee;
+    }
+
+    int64_t sz = GetTransactionWeight(bundle.tx);
+    int height = bundle.nHeight;
+
+    UniValue result(UniValue::VOBJ);
+    result.pushKV("amount", amountTotal);
+    result.pushKV("fees", amountMainchainFees);
+    result.pushKV("weight", sz);
+    result.pushKV("height", height);
+
+    return result;
+}
+
 UniValue getwithdrawal(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 1)
@@ -915,6 +957,7 @@ static const CRPCCommand commands[] =
     { "sidechain",          "getmainchainblockcount",       &getmainchainblockcount,        {}},
     { "sidechain",          "getmainchainblockhash",        &getmainchainblockhash,         {"height"}},
     { "sidechain",          "getwithdrawalbundle",          &getwithdrawalbundle,           {}},
+    { "sidechain",          "getwithdrawalbundleinfo",      &getwithdrawalbundleinfo,       {}},
     { "sidechain",          "verifymainblockcache",         &verifymainblockcache,          {}},
     { "sidechain",          "updatemainblockcache",         &updatemainblockcache,          {}},
     { "sidechain",          "listmywithdrawals",            &listmywithdrawals,             {}},
