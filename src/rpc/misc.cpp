@@ -754,6 +754,15 @@ UniValue getwithdrawalbundleinfo(const JSONRPCRequest& request)
 	    "getwithdrawalbundleinfo\n"
             "\nArguments:\n"
             "1. \"id (string, required) the withdrawal bundle ID\"\n"
+            "\nResult:\n"
+            "{\n"
+            "  \"amount\"       	(numeric) Total output amount\n"
+            "  \"fees\"         	(numeric) Total mainchain fees\n"
+            "  \"weight\"       	(numeric) Tx weight\n"
+            "  \"height\"       	(numeric) Total mainchain fees\n"
+            "  \"withdrawals []\"       (array) list of withdrawal ids\n"
+            "}\n"
+
 	    "\nGet withdrawal bundle info.\n"
 	);
 
@@ -769,12 +778,14 @@ UniValue getwithdrawalbundleinfo(const JSONRPCRequest& request)
     // Calculate total output and total mainchain fees
     CAmount amountTotal = 0;
     CAmount amountMainchainFees = 0;
+    UniValue arrID(UniValue::VARR);
     for (const uint256& id : bundle.vWithdrawalID) {
         SidechainWithdrawal wt;
         if (!psidechaintree->GetWithdrawal(id, wt)) 
             throw JSONRPCError(RPC_MISC_ERROR, "Withdrawal from bundle missing in DB!");
         amountTotal += wt.amount;
         amountMainchainFees += wt.mainchainFee;
+	arrID.push_back(id.ToString());
     }
 
     int64_t sz = GetTransactionWeight(bundle.tx);
@@ -785,6 +796,7 @@ UniValue getwithdrawalbundleinfo(const JSONRPCRequest& request)
     result.pushKV("fees", amountMainchainFees);
     result.pushKV("weight", sz);
     result.pushKV("height", height);
+    result.pushKV("withdrawals", arrID);
 
     return result;
 }
