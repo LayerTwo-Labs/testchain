@@ -502,6 +502,12 @@ std::string HelpMessage(HelpMessageMode mode)
     if (showDebug)
         strUsage += HelpMessageOpt("-blockversion=<n>", "Override block version to test forking scenarios");
 
+    strUsage += HelpMessageGroup(_("Mainchain connection options:"));
+    strUsage += HelpMessageOpt("-mainchainrpcport=<port>", strprintf(_("Connect to mainchain on <port> (default: %u)"), defaultBaseParams->RPCPort()));
+    strUsage += HelpMessageOpt("-mainchainrpchost=<host>", strprintf(_("Connect to mainchain on <host> (default: localhost)")));
+    strUsage += HelpMessageOpt("-mainchainrpcuser=<user>", strprintf(_("Connect to mainchain with username <user> (default: value of -rpcuser)")));
+    strUsage += HelpMessageOpt("-mainchainrpcpassword=<pw>", strprintf(_("Connect to mainchain with password <pw> (default: value of -rpcpassword)")));
+
     strUsage += HelpMessageGroup(_("RPC server options:"));
     strUsage += HelpMessageOpt("-rest", strprintf(_("Accept public REST requests (default: %u)"), DEFAULT_REST_ENABLE));
     strUsage += HelpMessageOpt("-rpcallowip=<ip>", _("Allow JSON-RPC connections from specified source. Valid for <ip> are a single IP (e.g. 1.2.3.4), a network/netmask (e.g. 1.2.3.4/255.255.255.0) or a network/CIDR (e.g. 1.2.3.4/24). This option can be specified multiple times"));

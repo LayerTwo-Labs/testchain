@@ -692,8 +692,11 @@ bool SidechainClient::HaveFailedWithdrawalBundle(const uint256& hash)
 
 bool SidechainClient::SendRequestToMainchain(const std::string& json, boost::property_tree::ptree &ptree)
 {
+    std::string username = gArgs.GetArg("-mainchainrpcuser", gArgs.GetArg("-rpcuser", ""));
+    std::string password = gArgs.GetArg("-mainchainrpcpassword", gArgs.GetArg("-rpcpassword", ""));
+
     // Format user:pass for authentication
-    std::string auth = gArgs.GetArg("-rpcuser", "") + ":" + gArgs.GetArg("-rpcpassword", "");
+    std::string auth = username + ":" + password;
     if (auth == ":")
         return false;
 
@@ -702,13 +705,14 @@ bool SidechainClient::SendRequestToMainchain(const std::string& json, boost::pro
     // Regtest RPC = 18443
     //
     bool fRegtest = gArgs.GetBoolArg("-regtest", false);
-    int port = fRegtest ? 18443 : 8332;
+    std::string port = gArgs.GetArg("-mainchainrpcport", fRegtest ? "18443" : "8332");
+    std::string host = gArgs.GetArg("-mainchainrpchost", "localhost");
 
     try {
         // Setup BOOST ASIO for a synchronus call to the mainchain
         boost::asio::io_service io_service;
         tcp::resolver resolver(io_service);
-        tcp::resolver::query query("127.0.0.1", std::to_string(port));
+        tcp::resolver::query query(host, port);
         tcp::resolver::iterator endpoint_iterator = resolver.resolve(query);
         tcp::resolver::iterator end;
 
@@ -779,7 +783,7 @@ bool SidechainClient::SendRequestToMainchain(const std::string& json, boost::pro
         jss << JSON;
         boost::property_tree::json_parser::read_json(jss, ptree);
     } catch (std::exception &exception) {
-        LogPrintf("ERROR Sidechain client (sendRequestToMainchain): %s\n", exception.what());
+        LogPrintf("ERROR Sidechain client at %s:%d (sendRequestToMainchain): %s\n", host, port, exception.what());
         return false;
     }
     return true;
