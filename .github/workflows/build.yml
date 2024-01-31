@@ -1,0 +1,95 @@
+name: Build
+
+on: 
+  pull_request: 
+  push: 
+    branches:
+      - "testchain"
+
+jobs: 
+  build-linux: 
+    name: Build Linux binaries
+    runs-on: ubuntu-20.04
+    steps: 
+      - name: install Linux deps
+        run: sudo apt-get install build-essential libtool autotools-dev automake pkg-config libssl-dev libevent-dev bsdmainutils python3
+
+      - uses: actions/checkout@v3
+    
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with: 
+          path: ./depends
+          key: ${{ runner.os }}-${{ hashFiles('depends/packages/**') }}
+
+      - name: download dependencies
+        run: make -C ./depends download-linux
+
+      - name: build dependencies
+        run: make -C ./depends NO_QT=1 -j4
+
+      - run: ./autogen.sh
+
+      - run: echo "CONFIG_SITE=$PWD/depends/x86_64-pc-linux-gnu/share/config.site" >> $GITHUB_ENV
+
+      - run: ./configure 
+
+      - run: make -j4
+
+      - uses: actions/upload-artifact@v4
+        with: 
+          name: binaries-Linux
+          if-no-files-found: error
+          path: |
+            src/testchaind
+            src/testchain-cli
+
+
+  build-windows: 
+    name: Build Windows binaries
+    runs-on: ubuntu-20.04
+    steps: 
+        # g++-mingw-w64-x86-64 is the cross-compiling toolchain needed for 
+        # producing Windows binaries
+        #
+        # python3 line is needed to make `python` resolve to `python3`
+      - name: install deps
+        run: |
+          sudo apt install g++-mingw-w64-x86-64 \
+                build-essential libtool autotools-dev automake \
+                libssl-dev libevent-dev \
+                pkg-config bsdmainutils curl git \
+                python3-setuptools python-is-python3 \
+        
+      - name: configure the Windows toolchain
+        run: sudo update-alternatives --set x86_64-w64-mingw32-g++ /usr/bin/x86_64-w64-mingw32-g++-posix
+
+      - uses: actions/checkout@v3
+    
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with: 
+          path: ./depends
+          key: ${{ runner.os }}-${{ hashFiles('depends/packages/**') }}
+        
+      - name: download dependencies
+        run: make -C ./depends download-win
+
+      - name: build dependencies
+        run: make -C ./depends HOST=x86_64-w64-mingw32 NO_QT=1 -j4
+
+      - run: ./autogen.sh
+
+      - run: echo "CONFIG_SITE=$PWD/depends/x86_64-w64-mingw32/share/config.site" >> $GITHUB_ENV
+
+      - run: ./configure 
+
+      - run: make -j4
+
+      - uses: actions/upload-artifact@v4
+        with: 
+          name: binaries-Windows
+          if-no-files-found: error
+          path: |
+            src/testchaind.exe
+            src/testchain-cli.exe
