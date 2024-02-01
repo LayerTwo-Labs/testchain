@@ -36,7 +36,7 @@ $ export CONFIG_SITE=$PWD/depends/x86_64-pc-linux-gnu/share/config.site
 $ ./configure
 $ ./make -j
 
-# binaries are located in src/testchaind and src/testchain-cli
+# binaries are located in src/testchaind, src/testchain-cli and src/qt/testchain-qt
 ```
 
 ### macOS
@@ -67,7 +67,7 @@ $ ./configure.sh
 $ make -j
 
 # binaries are located (on the host machine) 
-# at src/testchaind and src/testchain-cli
+# at src/testchaind, src/testchain-cli and src/qt/testchain-qt
 ```
 
 ### Windows
@@ -94,7 +94,8 @@ $ ./autogen.sh
 $ ./configure.sh
 $ make -j
 
-# binaries are located at src/testchaind.exe and src/testchain-cli.exe
+# binaries are located at src/testchaind.exe, src/testchain-cli.exe and
+# src/qt/testchain-qt.exe
 ```
 
 

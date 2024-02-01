@@ -26,7 +26,7 @@ jobs:
         run: make -C ./depends download-linux
 
       - name: build dependencies
-        run: make -C ./depends NO_QT=1 -j4
+        run: make -C ./depends -j4
 
       - run: ./autogen.sh
 
@@ -43,6 +43,7 @@ jobs:
           path: |
             src/testchaind
             src/testchain-cli
+            src/qt/testchain-qt
 
 
   build-windows: 
@@ -76,7 +77,7 @@ jobs:
         run: make -C ./depends download-win
 
       - name: build dependencies
-        run: make -C ./depends HOST=x86_64-w64-mingw32 NO_QT=1 -j4
+        run: make -C ./depends HOST=x86_64-w64-mingw32 -j4
 
       - run: ./autogen.sh
 
@@ -93,6 +94,7 @@ jobs:
           path: |
             src/testchaind.exe
             src/testchain-cli.exe
+            src/qt/testchain-qt.exe
 
   build-macos: 
     name: Build macOS binaries
@@ -118,11 +120,11 @@ jobs:
           run: |
             set -e
 
-            make -C depends NO_QT=1 -j4
+            make -C depends -j4
             export CONFIG_SITE=$PWD/depends/x86_64-apple-darwin11/share/config.site
             ./autogen.sh
             ./configure
-            make -j
+            make -j4 # Limit the concurrency to prevent OOM
 
       - uses: actions/upload-artifact@v4
         with: 
@@ -131,3 +133,4 @@ jobs:
           path: |
             src/testchaind
             src/testchain-cli
+            src/qt/testchain-qt
