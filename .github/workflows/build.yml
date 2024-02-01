@@ -20,7 +20,7 @@ jobs:
         uses: actions/cache@v3
         with: 
           path: ./depends
-          key: ${{ runner.os }}-${{ hashFiles('depends/packages/**') }}
+          key: linux-${{ hashFiles('depends/packages/**') }}
 
       - name: download dependencies
         run: make -C ./depends download-linux
@@ -70,7 +70,7 @@ jobs:
         uses: actions/cache@v3
         with: 
           path: ./depends
-          key: ${{ runner.os }}-${{ hashFiles('depends/packages/**') }}
+          key: windows-${{ hashFiles('depends/packages/**') }}
         
       - name: download dependencies
         run: make -C ./depends download-win
@@ -93,3 +93,41 @@ jobs:
           path: |
             src/testchaind.exe
             src/testchain-cli.exe
+
+  build-macos: 
+    name: Build macOS binaries
+    runs-on: ubuntu-latest
+    steps: 
+      - uses: actions/checkout@v3
+    
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with: 
+          path: ./depends
+          key: macos-${{ hashFiles('depends/packages/**') }}          
+      
+      - name: download dependencies
+        run: make -C ./depends download-osx
+
+      - name: Run build in Docker
+        uses: addnab/docker-run-action@v3 
+        with: 
+          image: barebitcoin/testchain-macos-builder
+          options: -v ${{ github.workspace }}:/testchain --workdir=/testchain
+          shell: bash
+          run: |
+            set -e
+
+            make -C depends NO_QT=1 -j4
+            export CONFIG_SITE=$PWD/depends/x86_64-apple-darwin11/share/config.site
+            ./autogen.sh
+            ./configure
+            make -j
+
+      - uses: actions/upload-artifact@v4
+        with: 
+          name: binaries-macOS
+          if-no-files-found: error
+          path: |
+            src/testchaind
+            src/testchain-cli
