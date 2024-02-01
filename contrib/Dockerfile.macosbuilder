@@ -1,0 +1,27 @@
+FROM ubuntu:trusty
+
+RUN mkdir -p /work/SDKs
+
+WORKDIR /work
+
+RUN apt-get update
+
+# Needed for TLS to work 
+RUN apt-get install ca-certificates
+
+# General Linux deps
+RUN apt-get -y install build-essential libtool autotools-dev automake pkg-config libssl-dev libevent-dev bsdmainutils python3
+
+# macOS cross-compilation deps
+RUN apt-get -y install curl librsvg2-bin libtiff-tools bsdmainutils cmake imagemagick libcap-dev libz-dev libbz2-dev python-setuptools
+
+ARG SDK_VERSION=10.11
+ARG SDK_FILE=MacOSX${SDK_VERSION}.sdk
+
+RUN curl --fail https://bitcoincore.org/depends-sources/sdks/${SDK_FILE}.tar.gz \
+         --output ${SDK_FILE}.tar.gz \
+         --insecure
+
+RUN tar -C /work/SDKs -xf ${SDK_FILE}.tar.gz
+
+ENV HOST=x86_64-apple-darwin11 SDK_PATH=/work/SDKs
