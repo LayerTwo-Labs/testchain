@@ -20,13 +20,13 @@ jobs:
         uses: actions/cache@v3
         with: 
           path: ./depends
-          key: ${{ runner.os }}-${{ hashFiles('depends/packages/**') }}
+          key: linux-${{ hashFiles('depends/packages/**') }}
 
       - name: download dependencies
         run: make -C ./depends download-linux
 
       - name: build dependencies
-        run: make -C ./depends NO_QT=1 -j4
+        run: make -C ./depends -j4
 
       - run: ./autogen.sh
 
@@ -43,6 +43,7 @@ jobs:
           path: |
             src/testchaind
             src/testchain-cli
+            src/qt/testchain-qt
 
 
   build-windows: 
@@ -70,13 +71,13 @@ jobs:
         uses: actions/cache@v3
         with: 
           path: ./depends
-          key: ${{ runner.os }}-${{ hashFiles('depends/packages/**') }}
+          key: windows-${{ hashFiles('depends/packages/**') }}
         
       - name: download dependencies
         run: make -C ./depends download-win
 
       - name: build dependencies
-        run: make -C ./depends HOST=x86_64-w64-mingw32 NO_QT=1 -j4
+        run: make -C ./depends HOST=x86_64-w64-mingw32 -j4
 
       - run: ./autogen.sh
 
@@ -93,3 +94,43 @@ jobs:
           path: |
             src/testchaind.exe
             src/testchain-cli.exe
+            src/qt/testchain-qt.exe
+
+  build-macos: 
+    name: Build macOS binaries
+    runs-on: ubuntu-latest
+    steps: 
+      - uses: actions/checkout@v3
+    
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with: 
+          path: ./depends
+          key: macos-${{ hashFiles('depends/packages/**') }}          
+      
+      - name: download dependencies
+        run: make -C ./depends download-osx
+
+      - name: Run build in Docker
+        uses: addnab/docker-run-action@v3 
+        with: 
+          image: barebitcoin/testchain-macos-builder
+          options: -v ${{ github.workspace }}:/testchain --workdir=/testchain
+          shell: bash
+          run: |
+            set -e
+
+            make -C depends -j4
+            export CONFIG_SITE=$PWD/depends/x86_64-apple-darwin11/share/config.site
+            ./autogen.sh
+            ./configure
+            make -j4 # Limit the concurrency to prevent OOM
+
+      - uses: actions/upload-artifact@v4
+        with: 
+          name: binaries-macOS
+          if-no-files-found: error
+          path: |
+            src/testchaind
+            src/testchain-cli
+            src/qt/testchain-qt
