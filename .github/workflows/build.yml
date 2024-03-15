@@ -171,12 +171,12 @@ jobs:
 
         - name: Zip artifacts
           run: |
-            mv testchain-*-x86_64-apple-darwin11 L2-Testchain-latest-x86_64-apple-darwin
-            zip -r L2-Testchain-latest-x86_64-apple-darwin.zip L2-Testchain-latest-x86_64-apple-darwin
-            mv testchain-*-x86_64-w64-mingw32 L2-Testchain-latest-x86_64-w64-mingw32
-            zip -r L2-Testchain-latest-x86_64-w64-mingw32.zip L2-Testchain-latest-x86_64-w64-mingw32
-            mv testchain-*-x86_64-unknown-linux-gnu L2-Testchain-latest-x86_64-unknown-linux-gnu
-            zip -r L2-Testchain-latest-x86_64-unknown-linux-gnu.zip L2-Testchain-latest-x86_64-unknown-linux-gnu
+            mv testchain-*-x86_64-apple-darwin11 L2-S0-Testchain-latest-x86_64-apple-darwin
+            zip -r L2-S0-Testchain-latest-x86_64-apple-darwin.zip L2-S0-Testchain-latest-x86_64-apple-darwin
+            mv testchain-*-x86_64-w64-mingw32 L2-S0-Testchain-latest-x86_64-w64-mingw32
+            zip -r L2-S0-Testchain-latest-x86_64-w64-mingw32.zip L2-S0-Testchain-latest-x86_64-w64-mingw32
+            mv testchain-*-x86_64-unknown-linux-gnu L2-S0-Testchain-latest-x86_64-unknown-linux-gnu
+            zip -r L2-S0-Testchain-latest-x86_64-unknown-linux-gnu.zip L2-S0-Testchain-latest-x86_64-unknown-linux-gnu
 
         - name: Upload artifacts to releases.drivechain.info
           uses: cross-the-world/ssh-scp-ssh-pipelines@latest
@@ -186,4 +186,4 @@ jobs:
             pass: ${{ secrets.RELEASES_SERVER_PW }}
             port: 22
             scp: |
-              'L2-Testchain-latest-*.zip' => '/var/www/html/'
+              'L2-S0-Testchain-latest-*.zip' => '/var/www/html/'
