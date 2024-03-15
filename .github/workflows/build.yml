@@ -42,6 +42,9 @@ jobs:
           TESTCHAIN_VERSION=$(grep -oP "(?<=^PACKAGE_VERSION=').+(?='$)" configure)
           echo "TESTCHAIN_VERSION=$TESTCHAIN_VERSION" >> "$GITHUB_ENV"
 
+      - name: move qt binary before uploading artifacts
+        run: mv src/qt/testchain-qt src/testchain-qt
+
       - uses: actions/upload-artifact@v4
         with: 
           name: testchain-${{ env.TESTCHAIN_VERSION }}-x86_64-unknown-linux-gnu
@@ -98,6 +101,9 @@ jobs:
           TESTCHAIN_VERSION=$(grep -oP "(?<=^PACKAGE_VERSION=').+(?='$)" configure)
           echo "TESTCHAIN_VERSION=$TESTCHAIN_VERSION" >> "$GITHUB_ENV"
 
+      - name: move qt binary before uploading artifacts
+        run: mv src/qt/testchain-qt.exe src/testchain-qt.exe
+
       - uses: actions/upload-artifact@v4
         with: 
           name: testchain-${{ env.TESTCHAIN_VERSION }}-x86_64-w64-mingw32
@@ -105,7 +111,7 @@ jobs:
           path: |
             src/testchaind.exe
             src/testchain-cli.exe
-            src/qt/testchain-qt.exe
+            src/testchain-qt.exe
 
   build-macos: 
     name: Build macOS binaries
@@ -142,6 +148,9 @@ jobs:
           TESTCHAIN_VERSION=$(grep -oP "(?<=^PACKAGE_VERSION=').+(?='$)" configure)
           echo "TESTCHAIN_VERSION=$TESTCHAIN_VERSION" >> "$GITHUB_ENV"
 
+      - name: move qt binary before uploading artifacts
+        run: mv src/qt/testchain-qt src/testchain-qt
+
       - uses: actions/upload-artifact@v4
         with: 
           name: testchain-${{ env.TESTCHAIN_VERSION }}-x86_64-apple-darwin11
@@ -149,15 +158,25 @@ jobs:
           path: |
             src/testchaind
             src/testchain-cli
-            src/qt/testchain-qt
+            src/testchain-qt
 
   upload-artifacts-to-releases-drivechain-info:
       name: Upload artifacts to releases.drivechain.info
       runs-on: ubuntu-latest
       needs: [build-linux, build-macos, build-windows]
+      if: github.repository_owner == 'LayerTwo-Labs'
       steps:
         - name: Download artifacts
           uses: actions/download-artifact@v4
+
+        - name: Zip artifacts
+          run: |
+            mv testchain-*-x86_64-apple-darwin11 L2-Testchain-latest-x86_64-apple-darwin
+            zip -r L2-Testchain-latest-x86_64-apple-darwin.zip L2-Testchain-latest-x86_64-apple-darwin
+            mv testchain-*-x86_64-w64-mingw32 L2-Testchain-latest-x86_64-w64-mingw32
+            zip -r L2-Testchain-latest-x86_64-w64-mingw32.zip L2-Testchain-latest-x86_64-w64-mingw32
+            mv testchain-*-x86_64-unknown-linux-gnu L2-Testchain-latest-x86_64-unknown-linux-gnu
+            zip -r L2-Testchain-latest-x86_64-unknown-linux-gnu.zip L2-Testchain-latest-x86_64-unknown-linux-gnu
 
         - name: Upload artifacts to releases.drivechain.info
           uses: cross-the-world/ssh-scp-ssh-pipelines@latest
@@ -167,6 +186,4 @@ jobs:
             pass: ${{ secrets.RELEASES_SERVER_PW }}
             port: 22
             scp: |
-              'testchain-*-x86_64-apple-darwin11' => '/var/www/html/L2-Testchain-latest-x86_64-apple-darwin'
-              'testchain-*-x86_64-w64-mingw32' => '/var/www/html/L2-Testchain-latest-x86_64-w64-mingw32'
-              'testchain-*-x86_64-unknown-linux-gnu' => '/var/www/html/L2-Testchain-latest-x86_64-unknown-linux-gnu'
+              'L2-Testchain-latest-*.zip' => '/var/www/html/'
