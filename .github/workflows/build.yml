@@ -52,7 +52,7 @@ jobs:
           path: |
             src/testchaind
             src/testchain-cli
-            src/qt/testchain-qt
+            src/testchain-qt
 
 
   build-windows: 
