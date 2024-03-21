@@ -580,7 +580,7 @@ fs::path GetDefaultDataDir()
     // Unix: ~/.bitcoin
 #ifdef WIN32
     // Windows
-    return GetSpecialFolderPath(CSIDL_APPDATA) / "drivechain_launcher_sidechains" / "Testchain";
+    return GetSpecialFolderPath(CSIDL_APPDATA) / "drivechain_launcher_sidechains" / "testchain";
 #else
     fs::path pathRet;
     char* pszHome = getenv("HOME");
@@ -590,10 +590,10 @@ fs::path GetDefaultDataDir()
         pathRet = fs::path(pszHome);
 #ifdef MAC_OSX
     // Mac
-    return pathRet / "Library/Application Support/drivechain_launcher_sidechains/Testchain";
+    return pathRet / "Library/Application Support/drivechain_launcher_sidechains/testchain";
 #else
     // Unix
-    return pathRet / "drivechain_launcher_sidechains" / ".testchain";
+    return pathRet / "drivechain_launcher_sidechains" / "testchain";
 #endif
 #endif
 }
