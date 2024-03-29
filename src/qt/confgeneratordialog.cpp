@@ -108,14 +108,14 @@ bool ConfGeneratorDialog::WriteConfigFiles(const QString& strUser, const QString
 #ifdef MAC_OSX
     strData = "Drivechain";
 #else
-    strData = ".drivechain";
+    strData = "drivechain";
 #endif
 #endif
 
     // Does the drivechain directory exist?
     fs::path pathData = pathHome / strData;
     if (!fs::exists(pathData)) {
-        QString strError = "Drivechain data directory (~/.drivechain) not found!\n";
+        QString strError = "Drivechain data directory (~/drivechain) not found!\n";
         messageBox.setText(strError);
         messageBox.exec();
         return false;
