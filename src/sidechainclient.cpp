@@ -530,6 +530,8 @@ bool SidechainClient::GetAverageFees(int nBlocks, int nStartHeight, CAmount& nAv
 
 bool SidechainClient::GetBlockCount(int& nBlocks)
 {
+    LogPrintf("%s a", __func__);
+
     // JSON for 'getblockcount' mainchain HTTP-RPC
     std::string json;
     json.append("{\"jsonrpc\": \"1.0\", \"id\":\"SidechainClient\", ");
@@ -542,6 +544,8 @@ bool SidechainClient::GetBlockCount(int& nBlocks)
         LogPrintf("ERROR Sidechain client failed to request block count\n");
         return false;
     }
+
+    LogPrintf("%s b", __func__);
 
     // Process result
     nBlocks = ptree.get("result", 0);
@@ -617,6 +621,7 @@ bool SidechainClient::ListWithdrawalBundleStatus(std::vector<uint256>& vHashWith
 
 bool SidechainClient::GetBlockHash(int nHeight, uint256& hashBlock)
 {
+    LogPrintf("%s a", __func__);
     // JSON for 'getblockhash' mainchain HTTP-RPC
     std::string json;
     json.append("{\"jsonrpc\": \"1.0\", \"id\":\"SidechainClient\", ");
@@ -631,6 +636,7 @@ bool SidechainClient::GetBlockHash(int nHeight, uint256& hashBlock)
         LogPrintf("ERROR Sidechain client failed to request block hash!\n");
         return false;
     }
+    LogPrintf("%s b", __func__);
 
     std::string strHash = ptree.get("result", "");
     hashBlock = uint256S(strHash);
@@ -692,6 +698,7 @@ bool SidechainClient::HaveFailedWithdrawalBundle(const uint256& hash)
 
 bool SidechainClient::SendRequestToMainchain(const std::string& json, boost::property_tree::ptree &ptree)
 {
+    LogPrintf("%s a", __func__);
     std::string username = gArgs.GetArg("-mainchainrpcuser", gArgs.GetArg("-rpcuser", ""));
     std::string password = gArgs.GetArg("-mainchainrpcpassword", gArgs.GetArg("-rpcpassword", ""));
 
@@ -700,6 +707,7 @@ bool SidechainClient::SendRequestToMainchain(const std::string& json, boost::pro
     if (auth == ":")
         return false;
 
+    LogPrintf("%s b", __func__);
     // Mainnet RPC = 8332
     // Testnet RPC = 18332
     // Regtest RPC = 18443
@@ -709,6 +717,7 @@ bool SidechainClient::SendRequestToMainchain(const std::string& json, boost::pro
     std::string host = gArgs.GetArg("-mainchainrpchost", "localhost");
 
     try {
+    LogPrintf("%s c", __func__);
         // Setup BOOST ASIO for a synchronus call to the mainchain
         boost::asio::io_service io_service;
         tcp::resolver resolver(io_service);
@@ -725,6 +734,7 @@ bool SidechainClient::SendRequestToMainchain(const std::string& json, boost::pro
           socket.close();
           socket.connect(*endpoint_iterator++, error);
         }
+    LogPrintf("%s d", __func__);
 
         if (error) throw boost::system::system_error(error);
 
@@ -746,6 +756,7 @@ bool SidechainClient::SendRequestToMainchain(const std::string& json, boost::pro
         std::string data;
         for (;;)
         {
+    LogPrintf("%s e", __func__);
             boost::array<char, 4096> buf;
 
             // Read until end of file (socket closed)
@@ -760,6 +771,7 @@ bool SidechainClient::SendRequestToMainchain(const std::string& json, boost::pro
                 throw boost::system::system_error(e);
         }
 
+    LogPrintf("%s f", __func__);
         std::stringstream ss;
         ss << data;
 
@@ -776,15 +788,18 @@ bool SidechainClient::SendRequestToMainchain(const std::string& json, boost::pro
         for (size_t i = 0; i < 5; i++)
             ss.ignore(std::numeric_limits<std::streamsize>::max(), '\r');
 
+    LogPrintf("%s g", __func__);
         // Parse json response;
         std::string JSON;
         ss >> JSON;
         std::stringstream jss;
         jss << JSON;
         boost::property_tree::json_parser::read_json(jss, ptree);
+    LogPrintf("%s h", __func__);
     } catch (std::exception &exception) {
         LogPrintf("ERROR Sidechain client at %s:%d (sendRequestToMainchain): %s\n", host, port, exception.what());
         return false;
     }
+    LogPrintf("%s i", __func__);
     return true;
 }

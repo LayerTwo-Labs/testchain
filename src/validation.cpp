@@ -6211,6 +6211,7 @@ void SetNetworkActive(bool fActive, const std::string& strReason)
 
 bool UpdateMainBlockHashCache(bool& fReorg, std::vector<uint256>& vDisconnected)
 {
+    LogPrintf("%s a\n", __func__);
     std::lock_guard<std::mutex> lock(mainBlockCacheMutex);
 
     //
@@ -6227,12 +6228,14 @@ bool UpdateMainBlockHashCache(bool& fReorg, std::vector<uint256>& vDisconnected)
         return false;
     }
 
+    LogPrintf("%s b\n", __func__);
     uint256 hashMainTip;
     if (!client.GetBlockHash(nMainBlocks, hashMainTip)) {
         LogPrintf("%s: Failed to get to mainchain tip block hash!\n", __func__);
         return false;
     }
 
+    LogPrintf("%s c\n", __func__);
     uint256 hashCachedTip = bmmCache.GetLastMainBlockHash();
 
     // If the block height hasn't changed, check that if cached chain tip is the
@@ -6243,6 +6246,7 @@ bool UpdateMainBlockHashCache(bool& fReorg, std::vector<uint256>& vDisconnected)
         return true;
     }
 
+    LogPrintf("%s d\n", __func__);
     // Otherwise;
     // From the new mainchain tip, start looping back through mainchain blocks
     // while keeping track of them in order until we find one that connects to
@@ -6266,6 +6270,7 @@ bool UpdateMainBlockHashCache(bool& fReorg, std::vector<uint256>& vDisconnected)
 
         deqHashNew.push_front(hashPrevBlock);
     }
+    LogPrintf("%s e\n", __func__);
     // Also add the new mainchain tip
     deqHashNew.push_back(hashMainTip);
 
