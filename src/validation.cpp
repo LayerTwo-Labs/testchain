@@ -6255,6 +6255,8 @@ bool UpdateMainBlockHashCache(bool& fReorg, std::vector<uint256>& vDisconnected)
     std::deque<uint256> deqHashNew;
     for (int i = nMainBlocks; i > 0; i--) {
         // Get the prevblockhash
+
+        LogPrintf("%s: Get mainchain block hash # %u\n", __func__, i - 1);
         if (!client.GetBlockHash(i - 1, hashPrevBlock)) {
             LogPrintf("%s: Failed to get to mainchain block: %u\n", __func__, i - 1);
             return false;

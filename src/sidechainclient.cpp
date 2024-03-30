@@ -23,6 +23,7 @@
 
 #include <boost/array.hpp>
 #include <boost/asio.hpp>
+#include <boost/asio/ip/tcp.hpp>
 #include <boost/foreach.hpp>
 
 using boost::asio::ip::tcp;
@@ -326,7 +327,7 @@ bool SidechainClient::GetCTIP(std::pair<uint256, uint32_t>& ctip)
 
     // Process CTIP
     uint256 txid;
-    uint32_t n;
+    uint32_t n = 0;
     BOOST_FOREACH(boost::property_tree::ptree::value_type &value, ptree.get_child("result")) {
         if (value.first == "n") {
             // Read n
@@ -698,7 +699,6 @@ bool SidechainClient::HaveFailedWithdrawalBundle(const uint256& hash)
 
 bool SidechainClient::SendRequestToMainchain(const std::string& json, boost::property_tree::ptree &ptree)
 {
-    LogPrintf("%s a", __func__);
     std::string username = gArgs.GetArg("-mainchainrpcuser", gArgs.GetArg("-rpcuser", ""));
     std::string password = gArgs.GetArg("-mainchainrpcpassword", gArgs.GetArg("-rpcpassword", ""));
 
@@ -707,34 +707,17 @@ bool SidechainClient::SendRequestToMainchain(const std::string& json, boost::pro
     if (auth == ":")
         return false;
 
-    LogPrintf("%s b", __func__);
-    // Mainnet RPC = 8332
-    // Testnet RPC = 18332
-    // Regtest RPC = 18443
-    //
     bool fRegtest = gArgs.GetBoolArg("-regtest", false);
-    std::string port = gArgs.GetArg("-mainchainrpcport", fRegtest ? "18443" : "8332");
-    std::string host = gArgs.GetArg("-mainchainrpchost", "localhost");
+    std::string host = "127.0.0.1";
+    int port = fRegtest ? 18443 : 8332;
 
     try {
-    LogPrintf("%s c", __func__);
         // Setup BOOST ASIO for a synchronus call to the mainchain
         boost::asio::io_service io_service;
-        tcp::resolver resolver(io_service);
-        tcp::resolver::query query(host, port);
-        tcp::resolver::iterator endpoint_iterator = resolver.resolve(query);
-        tcp::resolver::iterator end;
-
-        tcp::socket socket(io_service);
-        boost::system::error_code error = boost::asio::error::host_not_found;
-
-        // Try to connect
-        while (error && endpoint_iterator != end)
-        {
-          socket.close();
-          socket.connect(*endpoint_iterator++, error);
-        }
-    LogPrintf("%s d", __func__);
+        boost::asio::ip::tcp::socket socket(io_service);
+        boost::system::error_code error;
+        socket.connect(boost::asio::ip::tcp::endpoint(
+                    boost::asio::ip::address::from_string(host), port), error);
 
         if (error) throw boost::system::system_error(error);
 
@@ -756,8 +739,7 @@ bool SidechainClient::SendRequestToMainchain(const std::string& json, boost::pro
         std::string data;
         for (;;)
         {
-    LogPrintf("%s e", __func__);
-            boost::array<char, 4096> buf;
+            boost::array<char, 256> buf;
 
             // Read until end of file (socket closed)
             boost::system::error_code e;
@@ -771,7 +753,6 @@ bool SidechainClient::SendRequestToMainchain(const std::string& json, boost::pro
                 throw boost::system::system_error(e);
         }
 
-    LogPrintf("%s f", __func__);
         std::stringstream ss;
         ss << data;
 
@@ -788,18 +769,14 @@ bool SidechainClient::SendRequestToMainchain(const std::string& json, boost::pro
         for (size_t i = 0; i < 5; i++)
             ss.ignore(std::numeric_limits<std::streamsize>::max(), '\r');
 
-    LogPrintf("%s g", __func__);
         // Parse json response;
         std::string JSON;
         ss >> JSON;
         std::stringstream jss;
         jss << JSON;
         boost::property_tree::json_parser::read_json(jss, ptree);
-    LogPrintf("%s h", __func__);
     } catch (std::exception &exception) {
-        LogPrintf("ERROR Sidechain client at %s:%d (sendRequestToMainchain): %s\n", host, port, exception.what());
         return false;
     }
-    LogPrintf("%s i", __func__);
     return true;
 }
