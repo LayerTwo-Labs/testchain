@@ -23,6 +23,7 @@
 
 #include <boost/array.hpp>
 #include <boost/asio.hpp>
+#include <boost/asio/ip/tcp.hpp>
 #include <boost/foreach.hpp>
 
 using boost::asio::ip::tcp;
@@ -326,7 +327,7 @@ bool SidechainClient::GetCTIP(std::pair<uint256, uint32_t>& ctip)
 
     // Process CTIP
     uint256 txid;
-    uint32_t n;
+    uint32_t n = 0;
     BOOST_FOREACH(boost::property_tree::ptree::value_type &value, ptree.get_child("result")) {
         if (value.first == "n") {
             // Read n
@@ -700,31 +701,17 @@ bool SidechainClient::SendRequestToMainchain(const std::string& json, boost::pro
     if (auth == ":")
         return false;
 
-    // Mainnet RPC = 8332
-    // Testnet RPC = 18332
-    // Regtest RPC = 18443
-    //
     bool fRegtest = gArgs.GetBoolArg("-regtest", false);
-    std::string port = gArgs.GetArg("-mainchainrpcport", fRegtest ? "18443" : "8332");
-    std::string host = gArgs.GetArg("-mainchainrpchost", "localhost");
+    std::string host = "127.0.0.1";
+    int port = fRegtest ? 18443 : 8332;
 
     try {
         // Setup BOOST ASIO for a synchronus call to the mainchain
         boost::asio::io_service io_service;
-        tcp::resolver resolver(io_service);
-        tcp::resolver::query query(host, port);
-        tcp::resolver::iterator endpoint_iterator = resolver.resolve(query);
-        tcp::resolver::iterator end;
-
-        tcp::socket socket(io_service);
-        boost::system::error_code error = boost::asio::error::host_not_found;
-
-        // Try to connect
-        while (error && endpoint_iterator != end)
-        {
-          socket.close();
-          socket.connect(*endpoint_iterator++, error);
-        }
+        boost::asio::ip::tcp::socket socket(io_service);
+        boost::system::error_code error;
+        socket.connect(boost::asio::ip::tcp::endpoint(
+                    boost::asio::ip::address::from_string(host), port), error);
 
         if (error) throw boost::system::system_error(error);
 
@@ -746,7 +733,7 @@ bool SidechainClient::SendRequestToMainchain(const std::string& json, boost::pro
         std::string data;
         for (;;)
         {
-            boost::array<char, 4096> buf;
+            boost::array<char, 256> buf;
 
             // Read until end of file (socket closed)
             boost::system::error_code e;
