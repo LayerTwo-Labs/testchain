@@ -959,7 +959,7 @@ void SidechainPage::CheckConfiguration(bool& fConfig, bool& fConnection)
 #ifdef MAC_OSX
     strDrivechainData = "Drivechain";
 #else
-    strDrivechainData = ".drivechain";
+    strDrivechainData = "drivechain";
 #endif
 #endif
 
