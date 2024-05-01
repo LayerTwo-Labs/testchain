@@ -22,6 +22,7 @@
 
 #include <algorithm>
 #include <exception>
+#include <list>
 #include <map>
 #include <mutex>
 #include <set>
