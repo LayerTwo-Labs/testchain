@@ -14,6 +14,7 @@
 #include <univalue.h>
 #include <utilmoneystr.h>
 #include <utilstrencodings.h>
+#include <utiltime.h>
 #include <util.h>
 
 #include <iostream>
@@ -212,11 +213,20 @@ bool SidechainClient::VerifyBMM(const uint256& hashMainBlock, const uint256& has
     json.append("] }");
 
     // Try to request BMM proof from mainchain
+    // TODO this should read the response from mainchain and then sleep
+    // only if the error message is failed to read block from disk.
     boost::property_tree::ptree ptree;
     if (!SendRequestToMainchain(json, ptree)) {
-        // Can be enabled for debug -- too noisy
-        // LogPrintf("ERROR Sidechain client failed to request BMM proof\n");
-        return false;
+        // TODO if the response was failed to read from disk then retry
+        // Retry after waiting 5 seconds for main node to flush state
+
+        MilliSleep(5000);
+
+        if (!SendRequestToMainchain(json, ptree)) {
+            // Can be enabled for debug -- too noisy
+            // LogPrintf("ERROR Sidechain client failed to request BMM proof\n");
+            return false;
+        }
     }
 
     // Process result
